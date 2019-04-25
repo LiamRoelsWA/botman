@@ -93,20 +93,27 @@ class DialogflowV2Middleware implements MiddlewareInterface
      */
     protected function getResponse(IncomingMessage $message)
     {
-        $test = array('credentials' => $this->token);
-        $sessionsClient = new SessionsClient($test);
-        $session = $sessionsClient->sessionName($this->projectID, md5($message->getConversationIdentifier()));
+        try
+        {
+            $test = array('credentials' => $this->token);
+            $sessionsClient = new SessionsClient($test);
+            $session = $sessionsClient->sessionName($this->projectID, md5($message->getConversationIdentifier()));
 
-        $textInput = new TextInput();
-        $textInput->setText($message->getText());
-        $textInput->setLanguageCode($this->lang);
+            $textInput = new TextInput();
+            $textInput->setText($message->getText());
+            $textInput->setLanguageCode($this->lang);
 
-        // create query input
-        $queryInput = new QueryInput();
-        $queryInput->setText($textInput);
+            // create query input
+            $queryInput = new QueryInput();
+            $queryInput->setText($textInput);
 
-        // get response and relevant info
-        $response = $sessionsClient->detectIntent($session, $queryInput);
+            // get response and relevant info
+            $response = $sessionsClient->detectIntent($session, $queryInput);
+        }
+        finally
+        {
+            $sessionsClient->close();
+        }
 
         $this->response = json_decode($response->serializeToJsonString());
 
